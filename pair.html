@@ -6,12 +6,6 @@
   <title>ZUKO-MD PAIR</title>
   <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.0.0/css/all.min.css"/>
   <link href="https://fonts.googleapis.com/css2?family=Orbitron:wght@400;700;900&family=Exo+2:wght@300;400;600;700&family=Rajdhani:wght@400;500;600;700&display=swap" rel="stylesheet">
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="UTF-8">
-  <meta name="viewport" content="width=device-width, initial-scale=1.0">
-  <title>Modern UI Redesign</title>
   <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&display=swap" rel="stylesheet">
   <style>
     :root {
@@ -494,13 +488,15 @@
     <!-- Music Player Placeholder -->
     <div class="music-player">
       <div class="music-icon">
-        <i class="fas fa-music"></i>https://files.catbox.moe/4tfgtl.mp3</div>
+        <i class="fas fa-music"></i>
+      </div>
       <div class="music-title">ZUKO-MD THEME</div>
       <div class="music-subtitle">Background Music Player</div>
+      <audio id="bgMusic" src="https://files.catbox.moe/4tfgtl.mp3"></audio>
       <div class="music-controls">
-        <button class="music-btn"><i class="fas fa-backward"></i></button>
-        <button class="music-btn"><i class="fas fa-play"></i></button>
-        <button class="music-btn"><i class="fas fa-forward"></i></button>
+        <button class="music-btn" onclick="restartMusic()"><i class="fas fa-backward"></i></button>
+        <button class="music-btn" id="playPauseBtn" onclick="toggleMusic()"><i class="fas fa-play"></i></button>
+        <button class="music-btn" onclick="stopMusic()"><i class="fas fa-stop"></i></button>
       </div>
     </div>
 
@@ -516,7 +512,7 @@
 
     <div class="input-group" id="inputGroup">
       <label class="input-label">ENTER YOUR WHATSAPP NUMBER</label>
-      <input type="text" id="mobileNumber" class="input-field" placeholder="255********" pattern="[+][0-9]{10,}" title="Enter country code starting with + followed by number">
+      <input type="text" id="mobileNumber" class="input-field" placeholder="+2349023202975" pattern="^\+[0-9]{10,15}$" title="Enter country code starting with + followed by number (10-15 digits)">
     </div>
 
     <button class="generate-btn" id="submit">
@@ -551,6 +547,37 @@
   <script src="https://cdnjs.cloudflare.com/ajax/libs/axios/1.0.0-alpha.1/axios.min.js"></script>
   <script>
     let currentMode = 'pair';
+    let isPlaying = false;
+    const audio = document.getElementById('bgMusic');
+    const playPauseBtn = document.getElementById('playPauseBtn');
+
+    // Music control functions
+    function toggleMusic() {
+      if (isPlaying) {
+        audio.pause();
+        playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+      } else {
+        audio.play().catch(e => console.log('Audio play failed:', e));
+        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+      }
+      isPlaying = !isPlaying;
+    }
+
+    function restartMusic() {
+      audio.currentTime = 0;
+      if (!isPlaying) {
+        audio.play().catch(e => console.log('Audio play failed:', e));
+        playPauseBtn.innerHTML = '<i class="fas fa-pause"></i>';
+        isPlaying = true;
+      }
+    }
+
+    function stopMusic() {
+      audio.pause();
+      audio.currentTime = 0;
+      playPauseBtn.innerHTML = '<i class="fas fa-play"></i>';
+      isPlaying = false;
+    }
 
     // Toggle functionality
     document.querySelectorAll('.toggle-option').forEach(option => {
@@ -630,6 +657,13 @@
         return;
       }
 
+      // Validate phone number format
+      const phoneRegex = /^\+[0-9]{10,15}$/;
+      if (!phoneRegex.test(mobileNumber)) {
+        codeDisplay.innerHTML = '<div class="error-message"><i class="fas fa-exclamation-circle"></i> PLEASE ENTER A VALID PHONE NUMBER WITH COUNTRY CODE</div>';
+        return;
+      }
+
       loadingSpinner.style.display = "block";
       codeDisplay.innerHTML = '';
       qrDisplay.style.display = 'none';
@@ -654,8 +688,17 @@
     });
 
     function copyCode() {
-      const codeDisplay = document.getElementById("codeDisplay").innerText;
-      const code = codeDisplay.replace('CODE: ', '');
+      const codeDisplay = document.getElementById("codeDisplay");
+      const codeText = codeDisplay.innerText;
+      
+      // Extract only the code part (remove "CODE: " and any other text)
+      const codeMatch = codeText.match(/CODE:\s*([A-Z0-9-]+)/);
+      if (!codeMatch) {
+        alert('No code to copy!');
+        return;
+      }
+      
+      const code = codeMatch[1];
       navigator.clipboard.writeText(code).then(() => {
         const copyBtn = document.getElementById("copy");
         const originalText = copyBtn.innerHTML;
@@ -665,6 +708,7 @@
         }, 2000);
       }).catch(err => {
         console.error("Failed to copy text: ", err);
+        alert('Failed to copy code!');
       });
     }
 
